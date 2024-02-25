@@ -2,7 +2,7 @@
   "name": "flashliquidity-sbp-vaults",
   "version": "0.0.1",
   "license": "MIT",
-  "repository": "https://github.com/flashliquidity/flashliquidity-farms.git",
+  "repository": "https://github.com/flashliquidity/flashliquidity-sbp-vaults.git",
   "scripts": {
     "setup": "yarn && forge install",
     "compile": "forge build",
