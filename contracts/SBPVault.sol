@@ -52,12 +52,11 @@ contract SBPVault is ISBPVault, ERC20 {
     bool private s_initialized;
 
     struct VaultState {
-        address feeTo; //
-        bool feeOn;
-        uint48 lastLiquefiedTimestamp; //
-        uint32 automationInterval;
+        address feeTo; // Address to which fees are sent
+        bool feeOn; // Flag indicating whether fees are currently enabled
+        uint48 lastLiquefiedTimestamp; // Timestamp of the last reward liquefaction
+        uint32 automationInterval; // Interval for automatic reward liquefaction
     }
-    //
 
     event Staked(address indexed staker, uint256 amount);
     event Withdrawn(address indexed withdrawer, uint256 amount);
