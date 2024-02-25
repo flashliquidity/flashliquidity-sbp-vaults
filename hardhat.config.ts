@@ -21,11 +21,59 @@ const POLYGON_ZKEVM_RPC = "https://zkevm-rpc.com" || process.env.POLYGON_ZKEVM_R
 const AVALANCHE_C_CHAIN_RPC = "https://api.avax.network/ext/bc/C/rpc" || process.env.AVALANCHE_C_CHAIN_RPC
 const AVALANCHE_FUJI_RPC = "https://api.avax-test.network/ext/bc/C/rpc" || process.env.AVALANCHE_FUJI_RPC
 const ARBITRUM_ONE_RPC = "https://arb1.arbitrum.io/rpc" || process.env.ARBITRUM_ONE_RPC
-const ARBITRUM_TESTNET_RPC = "https://goerli-rollup.arbitrum.io/rpc" || process.env.ARBITRUM_TESTNET_RPC
+const ARBITRUM_SEPOLIA_RPC = "https://sepolia-rollup.arbitrum.io/rpc" || process.env.ARBITRUM_TESTNET_RPC
 
 const config: HardhatUserConfig = {
     etherscan: {
-        apiKey: process.env.ETHERSCAN_API_KEY,
+        apiKey: {
+            mainnet: process.env.ETHERSCAN_API_KEY,
+            sepolia: process.env.ETHERSCAN_API_KEY,
+            polygon: process.env.POLYGONSCAN_API_KEY,
+            polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+            zkevm: process.env.ZKEVMSCAN_API_KEY,
+            zkevm_testnet: process.env.ZKEVMSCAN_API_KEY,
+            base: process.env.BASESCAN_API_KEY,
+            base_goerli: process.env.BASESCAN_API_KEY,
+            avalanche: process.env.SNOWTRACE_API_KEY,
+            avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
+            arbitrum: process.env.ARBISCAN_API_KEY,
+            arbitrum_sepolia: process.env.ARBISCAN_API_KEY
+        },
+        customChains: [
+
+            {
+                network: "base",
+                chainId: 8453,
+                urls: {
+                    apiURL: "https://api.basescan.org/api",
+                    browserURL: "https://basescan.org"
+                }
+            },
+            {
+                network: "base_goerli",
+                chainId: 84531,
+                urls: {
+                    apiURL: "https://api-goerli.basescan.org/api",
+                    browserURL: "https://goerli.basescan.org"
+                }
+            },
+            {
+                network: "zkevm",
+                chainId: 1101,
+                urls: {
+                    apiURL: "https://api-zkevm.polygonscan.com/api",
+                    browserURL: "https://zkevm.polygonscan.com/"
+                }
+            },
+            {
+                network: "zkevm_testnet",
+                chainId: 1442,
+                urls: {
+                    apiURL: "https://api-zkevm.polygonscan.com/api",
+                    browserURL: "https://zkevm.polygonscan.com/"
+                }
+            }
+        ]
     },
     networks: {
         ethereum: {
@@ -110,9 +158,9 @@ const config: HardhatUserConfig = {
             saveDeployments: true,
             accounts: [PRIVATE_KEY],
         },
-        arbi_testnet: {
-            url: ARBITRUM_TESTNET_RPC,
-            chainId: 421611,
+        arbitrum_sepolia: {
+            url: ARBITRUM_SEPOLIA_RPC,
+            chainId: 421614,
             live: true,
             saveDeployments: true,
             gasMultiplier: 2,
