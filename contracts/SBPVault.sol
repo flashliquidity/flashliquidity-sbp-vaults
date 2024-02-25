@@ -26,27 +26,27 @@ contract SBPVault is ISBPVault, ERC20 {
     error SBPVault__ZeroSharesBurned();
     error SBPVault__CannotLiquefyRewards();
 
-    /// @dev Fee charged for certain operations within the vault, represented in basis points (parts per 10,000).
+    /// @dev Fee charged for rebalancing operations plus rewards autocompounding, represented in basis points (parts per 10,000).
     uint256 public constant FEE = 200;
-    /// @dev Time lock period for the initializer to perform certain actions, set to 7 days.
+    /// @dev Vault shares time lock period for the initializer, set to 7 days.
     uint256 public constant INITIALIZER_TIMELOCK = 7 days;
     /// @dev Minimum amount of LP tokens required to initialize the vault.
     uint256 public constant MIN_INITIALIZATION_AMOUNT = 1_000_000_000;
     /// @dev Timestamp when the vault was initialized, used in conjunction with `INITIALIZER_TIMELOCK`.
     uint256 private immutable i_initializationTimestamp;
-    /// @dev Address of the account that initialized the vault, potentially with special privileges or restrictions.
+    /// @dev Address of the account that initialized the vault.
     address private immutable i_initializer;
-    /// @dev Address of the vault factory, typically the contract that deployed this vault.
+    /// @dev Address of the vault factory that deployed this vault.
     address private immutable i_vaultFactory;
     /// @dev Address of the first token in the LP token pair.
     address private immutable i_token0;
     /// @dev Address of the second token in the LP token pair.
     address private immutable i_token1;
-    /// @dev Contract instance of the LP token associated with this vault.
+    /// @dev LP token associated with this vault.
     IERC20 private immutable i_lpToken;
     /// @dev Router used for adding liquidity to the liquidity pool.
     IAddLiquidityRouter private immutable i_router;
-    /// @dev Current state of the vault, including parameters like the fee recipient and automation interval.
+    /// @dev Current state of the vault, including parameters like the fee recipient, fee switch and automation interval.
     VaultState private s_vaultState;
     /// @dev Boolean flag indicating whether the vault has been initialized.
     bool private s_initialized;
