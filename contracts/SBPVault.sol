@@ -93,8 +93,8 @@ contract SBPVault is ISBPVault, ERC20 {
             lastLiquefiedTimestamp: uint48(block.timestamp),
             automationInterval: automationInterval
         });
-        IERC20(token0).approve(address(router), type(uint256).max);
-        IERC20(token1).approve(address(router), type(uint256).max);
+        IERC20(token0).forceApprove(address(router), type(uint256).max);
+        IERC20(token1).forceApprove(address(router), type(uint256).max);
     }
 
     /// @inheritdoc ISBPVault
