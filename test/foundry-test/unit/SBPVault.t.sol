@@ -45,13 +45,15 @@ contract SBPVaultTest is Test {
         vm.prank(bob);
         pairMock = new LpTokenMock(address(linkToken), address(mockToken), supply);
         router = new RouterMock(address(linkToken), address(mockToken), address(pairMock));
+        vm.prank(bob);
+        ERC20(pairMock).transfer(address(router), 5 ether);
         linkToken.transfer(address(pairMock), 1 ether);
         mockToken.transfer(address(pairMock), 1 ether);
         string memory vaultTokenName = "SelfBalancingMOCKLINK";
         string memory vaultTokenSymbol = "sbpMOCK/LINK";
         vm.prank(vaultFactory);
         vault =
-        new SBPVault(address(pairMock), feeTo, address(router), initializer, false, automationInterval, vaultTokenName, vaultTokenSymbol);
+        new SBPVault(address(pairMock), address(router), feeTo, initializer, false, automationInterval, vaultTokenName, vaultTokenSymbol);
     }
 
     function test__SBPVault_initialize() public {
@@ -119,6 +121,38 @@ contract SBPVaultTest is Test {
         uint256 bobLpBalanceAfterWithdraw = ERC20(pairMock).balanceOf(bob);
         uint256 vaultTokenSupplyAfterWithdraw = ERC20(vault).totalSupply();
         assertTrue(bobLpBalanceAfterWithdraw == bobLpBalanceBeforeWithdraw + 1 ether);
+        assertTrue(vaultTokenSupplyAfterWithdraw == vaultTokenSupplyBeforeWithdraw - 1 ether);
+    }
+
+    function test__SBPVault_exitNoAutocompound() public {
+        initializeVaultHelper();
+        vm.expectRevert(SBPVault.SBPVault__ZeroSharesBurned.selector);
+        vault.exit();
+        stakingHelper(bob, 1 ether);
+        uint256 bobLpBalanceBeforeWithdraw = ERC20(pairMock).balanceOf(bob);
+        uint256 vaultTokenSupplyBeforeWithdraw = ERC20(vault).totalSupply();
+        vm.prank(bob);
+        vault.exit();
+        uint256 bobLpBalanceAfterWithdraw = ERC20(pairMock).balanceOf(bob);
+        uint256 vaultTokenSupplyAfterWithdraw = ERC20(vault).totalSupply();
+        assertTrue(bobLpBalanceAfterWithdraw == bobLpBalanceBeforeWithdraw + 1 ether);
+        assertTrue(vaultTokenSupplyAfterWithdraw == vaultTokenSupplyBeforeWithdraw - 1 ether);
+    }
+
+    function test__SBPVault_exitAndAutocompound() public {
+        initializeVaultHelper();
+        vm.expectRevert(SBPVault.SBPVault__ZeroSharesBurned.selector);
+        vault.exit();
+        stakingHelper(bob, 1 ether);
+        uint256 bobLpBalanceBeforeWithdraw = ERC20(pairMock).balanceOf(bob);
+        uint256 vaultTokenSupplyBeforeWithdraw = ERC20(vault).totalSupply();
+        linkToken.transfer(address(vault), 1 ether);
+        mockToken.transfer(address(vault), 1 ether);
+        vm.prank(bob);
+        vault.exit();
+        uint256 bobLpBalanceAfterWithdraw = ERC20(pairMock).balanceOf(bob);
+        uint256 vaultTokenSupplyAfterWithdraw = ERC20(vault).totalSupply();
+        assertTrue(bobLpBalanceAfterWithdraw > bobLpBalanceBeforeWithdraw + 1 ether);
         assertTrue(vaultTokenSupplyAfterWithdraw == vaultTokenSupplyBeforeWithdraw - 1 ether);
     }
 }
