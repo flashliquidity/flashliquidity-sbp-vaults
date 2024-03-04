@@ -24,7 +24,6 @@ contract SBPVault is ISBPVault, ERC20 {
     error SBPVault__StakingAmountIsZero();
     error SBPVault__ZeroSharesMinted();
     error SBPVault__ZeroSharesBurned();
-    error SBPVault__CannotLiquefyRewards();
 
     /// @dev Fee charged for rebalancing operations plus rewards autocompounding, represented in basis points (parts per 10,000).
     uint256 public constant FEE = 200;
