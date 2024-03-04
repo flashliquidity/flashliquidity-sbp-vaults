@@ -10,7 +10,7 @@
     "unit-test": "forge test --nmt 'testFuzz|invariant'",
     "fuzz-test": "forge test --mt testFuzz",
     "invariant-test": "forge test --mt invariant",
-    "coverage": "forge coverage",
+    "coverage": "forge coverage --report summary --report lcov",
     "gas-report": "forge snapshot --gas-report",
     "slither": "slither .",
     "lint": "solhint 'contracts/*.sol'",
