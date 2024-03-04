@@ -58,8 +58,8 @@ contract SBPVaultFactory is ISBPVaultFactory, AutomationCompatibleInterface, Gov
     /// @inheritdoc ISBPVaultFactory
     function deployVault(
         address lpToken,
-        address feeTo,
         address initializer,
+        address feeTo,
         bool feeOn,
         uint256 initializationAmount,
         uint32 automationInterval,
@@ -69,7 +69,7 @@ contract SBPVaultFactory is ISBPVaultFactory, AutomationCompatibleInterface, Gov
         if (s_lpTokenVault[lpToken] != address(0)) revert SBPVaultFactory__VaultAlreadyDeployed();
         s_lpTokens.push(lpToken);
         address vault =
-            address(new SBPVault(lpToken, i_router, feeTo, initializer, feeOn, automationInterval, name, symbol));
+            address(new SBPVault(lpToken, i_router, initializer, feeTo, feeOn, automationInterval, name, symbol));
         s_lpTokenVault[lpToken] = vault;
         IERC20(lpToken).safeTransferFrom(initializer, vault, initializationAmount);
         ISBPVault(vault).initialize(initializationAmount);

@@ -70,8 +70,8 @@ contract SBPVault is ISBPVault, ERC20 {
     constructor(
         address lpToken,
         address router,
-        address feeTo,
         address initializer,
+        address feeTo,
         bool feeOn,
         uint32 automationInterval,
         string memory name,

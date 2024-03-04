@@ -31,8 +31,8 @@ contract SBPVaultFactoryTest is Test {
         ERC20(pairMock).approve(address(vaultFactory), 1 ether);
         vaultFactory.deployVault(
             address(pairMock),
-            feeTo,
             governor,
+            feeTo,
             false,
             initializationAmount,
             automationInterval,
@@ -60,8 +60,8 @@ contract SBPVaultFactoryTest is Test {
         vm.expectRevert(Governable.Governable__NotAuthorized.selector);
         vaultFactory.deployVault(
             address(pairMock),
-            feeTo,
             governor,
+            feeTo,
             false,
             initializationAmount,
             automationInterval,
@@ -72,8 +72,8 @@ contract SBPVaultFactoryTest is Test {
         vm.expectRevert("ERC20: insufficient allowance");
         vaultFactory.deployVault(
             address(pairMock),
-            feeTo,
             governor,
+            feeTo,
             false,
             initializationAmount,
             automationInterval,
@@ -84,8 +84,8 @@ contract SBPVaultFactoryTest is Test {
         uint256 balanceBefore = ERC20(pairMock).balanceOf(governor);
         vaultFactory.deployVault(
             address(pairMock),
-            feeTo,
             governor,
+            feeTo,
             false,
             initializationAmount,
             automationInterval,
@@ -99,8 +99,8 @@ contract SBPVaultFactoryTest is Test {
         vm.expectRevert(SBPVaultFactory.SBPVaultFactory__VaultAlreadyDeployed.selector);
         vaultFactory.deployVault(
             address(pairMock),
-            feeTo,
             governor,
+            feeTo,
             false,
             initializationAmount,
             automationInterval,

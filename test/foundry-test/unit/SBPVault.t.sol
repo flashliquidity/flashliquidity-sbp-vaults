@@ -53,7 +53,7 @@ contract SBPVaultTest is Test {
         string memory vaultTokenSymbol = "sbpMOCK/LINK";
         vm.prank(vaultFactory);
         vault =
-        new SBPVault(address(pairMock), address(router), feeTo, initializer, false, automationInterval, vaultTokenName, vaultTokenSymbol);
+        new SBPVault(address(pairMock), address(router), initializer, feeTo, false, automationInterval, vaultTokenName, vaultTokenSymbol);
     }
 
     function test__SBPVault_initialize() public {
