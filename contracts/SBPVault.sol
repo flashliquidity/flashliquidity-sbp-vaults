@@ -99,7 +99,7 @@ contract SBPVault is ISBPVault, ERC20 {
     /// @inheritdoc ISBPVault
     function initialize(uint256 initializationAmount) external onlyVaultFactory {
         if (s_initialized) revert SBPVault__AlreadyInitialized();
-        uint256 lpTokenBalance = IERC20(i_lpToken).balanceOf(address(this));
+        uint256 lpTokenBalance = i_lpToken.balanceOf(address(this));
         if (lpTokenBalance < initializationAmount || lpTokenBalance < MIN_INITIALIZATION_AMOUNT) {
             revert SBPVault__InsufficientInitializationAmount();
         }
