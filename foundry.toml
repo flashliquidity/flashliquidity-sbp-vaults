@@ -15,5 +15,5 @@ ffi = false
 runs = 1000
 
 [invariant]
-runs = 1
+runs = 32
 depth = 1024
