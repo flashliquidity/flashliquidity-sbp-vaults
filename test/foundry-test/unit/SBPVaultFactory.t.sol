@@ -133,6 +133,21 @@ contract SBPVaultFactoryTest is Test {
         assertTrue(automationIntervalValue == newAutomationInterval);
     }
 
+    function test__SBPVaultFactory_setVaultsParamsMassive() public {
+        uint32 newAutomationInterval = 6 hours;
+        address vault = deployVaultHelper();
+        (address feeToAddr, bool isFeeOn,, uint32 automationIntervalValue) = ISBPVault(vault).getVaultState();
+        assertFalse(feeToAddr == bob);
+        assertFalse(isFeeOn);
+        assertFalse(automationIntervalValue == newAutomationInterval);
+        vm.prank(governor);
+        vaultFactory.setVaultsParams(bob, true, newAutomationInterval, new address[](0));
+        (feeToAddr, isFeeOn,, automationIntervalValue) = ISBPVault(vault).getVaultState();
+        assertTrue(feeToAddr == bob);
+        assertTrue(isFeeOn);
+        assertTrue(automationIntervalValue == newAutomationInterval);
+    }
+
     function test__SBPVaultFactory_checkUpkeep() public {
         address vault = deployVaultHelper();
         (bool upkeepNeeded, bytes memory performData) = vaultFactory.checkUpkeep(abi.encode(0, 10));
