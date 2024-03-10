@@ -50,6 +50,12 @@ contract SBPVaultInvariantTest is Test {
     function test() public {}
 
     function invariant_SBPVault_VaultTokenSupplyNeverExceedsLpDeposit() public {
+        uint256 amount;
+        amount = bound(amount, 0, pairMock.balanceOf(msg.sender));
+        if(amount > 0) {
+            pairMock.approve(address(vault), amount);
+            vault.stake(amount);
+        }
         assertTrue(ERC20(vault).totalSupply() <= pairMock.balanceOf(address(vault))); 
     }
 }
