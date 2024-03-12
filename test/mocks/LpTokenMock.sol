@@ -2,20 +2,18 @@
 
 pragma solidity ^0.8.0;
 
-import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20, ERC20Mock} from "./ERC20Mock.sol";
 
-contract LpTokenMock is ERC20 {
+contract LpTokenMock is ERC20Mock {
     IERC20 private immutable i_token0;
     IERC20 private immutable i_token1;
 
     constructor(
         address tokenA,
-        address tokenB,
-        uint256 supply
-    ) ERC20("MockLP", "MOCK") {
+        address tokenB
+    ) ERC20Mock("MockLP", "MOCKLP") {
         i_token0 = IERC20(tokenA);
         i_token1 = IERC20(tokenB);
-        _mint(msg.sender, supply);
     }
 
     // coverage skip

@@ -12,100 +12,62 @@ import {LpTokenMock} from "../../mocks/LpTokenMock.sol";
 import {RouterMock} from "../../mocks/RouterMock.sol";
 
 contract SBPVaultFactoryTest is Test {
-    SBPVaultFactory vaultFactory;
-    RouterMock router;
-    address governor = makeAddr("governor");
-    address bob = makeAddr("bob");
-    address feeTo = makeAddr("feeTo");
-    uint256 initializationAmount = 1 ether;
-    uint32 automationInterval = 12 hours;
-    ERC20Mock linkToken;
-    ERC20Mock mockToken;
-    LpTokenMock pairMock;
-    uint256 supply = 1000 ether;
+    SBPVaultFactory public vaultFactory;
+    RouterMock public router;
+    ERC20Mock public linkToken;
+    ERC20Mock public mockToken;
+    LpTokenMock public pairMock;
+    address public governor = makeAddr("governor");
+    address public bob = makeAddr("bob");
+    address public feeTo = makeAddr("feeTo");
+    uint256 public initAmount = 1 ether;
+    uint32 public automationInterval = 12 hours;
+    string public vaultName = "SelfBalancingMOCKLINK";
+    string public vaultSymbol = "sbpMOCK/LINK";
 
     function deployVaultHelper() public returns (address) {
-        string memory vaultTokenName = "SelfBalancingMOCKLINK";
-        string memory vaultTokenSymbol = "sbpMOCK/LINK";
         vm.startPrank(governor);
-        ERC20(pairMock).approve(address(vaultFactory), 1 ether);
+        pairMock.approve(address(vaultFactory), 1 ether);
         vaultFactory.deployVault(
-            address(pairMock),
-            governor,
-            feeTo,
-            false,
-            initializationAmount,
-            automationInterval,
-            vaultTokenName,
-            vaultTokenSymbol
+            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
         );
         vm.stopPrank();
         return vaultFactory.getVault(address(pairMock));
     }
 
     function setUp() public {
-        linkToken = new ERC20Mock("LINK","LINK", supply);
-        mockToken = new ERC20Mock("MOCK","MOCK", supply);
-        vm.prank(governor);
-        pairMock = new LpTokenMock(address(linkToken), address(mockToken), supply);
+        linkToken = new ERC20Mock("LINK", "LINK");
+        mockToken = new ERC20Mock("MOCK", "MOCK");
+        pairMock = new LpTokenMock(address(linkToken), address(mockToken));
+        pairMock.mintTo(governor, 1000 ether);
         router = new RouterMock(address(linkToken), address(mockToken), address(pairMock));
-        linkToken.transfer(address(pairMock), 1 ether);
-        mockToken.transfer(address(pairMock), 1 ether);
+        linkToken.mintTo(address(pairMock), 1 ether);
+        mockToken.mintTo(address(pairMock), 1 ether);
         vaultFactory = new SBPVaultFactory(governor, address(router));
     }
 
     function test__SBPVaultFactory_deployVault() public {
-        string memory vaultTokenName = "SelfBalancingMOCKLINK";
-        string memory vaultTokenSymbol = "sbpMOCK/LINK";
         vm.expectRevert(Governable.Governable__NotAuthorized.selector);
         vaultFactory.deployVault(
-            address(pairMock),
-            governor,
-            feeTo,
-            false,
-            initializationAmount,
-            automationInterval,
-            vaultTokenName,
-            vaultTokenSymbol
+            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
         );
         vm.startPrank(governor);
         vm.expectRevert("ERC20: insufficient allowance");
         vaultFactory.deployVault(
-            address(pairMock),
-            governor,
-            feeTo,
-            false,
-            initializationAmount,
-            automationInterval,
-            vaultTokenName,
-            vaultTokenSymbol
+            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
         );
-        ERC20(pairMock).approve(address(vaultFactory), initializationAmount);
-        uint256 balanceBefore = ERC20(pairMock).balanceOf(governor);
+        pairMock.approve(address(vaultFactory), initAmount);
+        uint256 balanceBefore = pairMock.balanceOf(governor);
         vaultFactory.deployVault(
-            address(pairMock),
-            governor,
-            feeTo,
-            false,
-            initializationAmount,
-            automationInterval,
-            vaultTokenName,
-            vaultTokenSymbol
+            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
         );
         address vaultToken = vaultFactory.getVault(address(pairMock));
-        assertTrue(vaultToken != address(0));
-        assertTrue(ERC20(vaultToken).balanceOf(governor) == initializationAmount);
-        assertTrue(ERC20(pairMock).balanceOf(governor) == balanceBefore - initializationAmount);
+        assertNotEq(vaultToken, address(0));
+        assertEq(ERC20(vaultToken).balanceOf(governor), initAmount);
+        assertEq(pairMock.balanceOf(governor), balanceBefore - initAmount);
         vm.expectRevert(SBPVaultFactory.SBPVaultFactory__VaultAlreadyDeployed.selector);
         vaultFactory.deployVault(
-            address(pairMock),
-            governor,
-            feeTo,
-            false,
-            initializationAmount,
-            automationInterval,
-            vaultTokenName,
-            vaultTokenSymbol
+            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
         );
         vm.stopPrank();
     }
@@ -114,9 +76,9 @@ contract SBPVaultFactoryTest is Test {
         uint32 newAutomationInterval = 6 hours;
         address vault = deployVaultHelper();
         (address feeToAddr, bool isFeeOn,, uint32 automationIntervalValue) = ISBPVault(vault).getVaultState();
-        assertFalse(feeToAddr == bob);
+        assertNotEq(feeToAddr, bob);
         assertFalse(isFeeOn);
-        assertFalse(automationIntervalValue == newAutomationInterval);
+        assertNotEq(automationIntervalValue, newAutomationInterval);
         address[] memory lpTokens = new address[](1);
         lpTokens[0] = address(linkToken);
         vm.expectRevert(Governable.Governable__NotAuthorized.selector);
@@ -128,24 +90,24 @@ contract SBPVaultFactoryTest is Test {
         vaultFactory.setVaultsParams(bob, true, newAutomationInterval, lpTokens);
         vm.stopPrank();
         (feeToAddr, isFeeOn,, automationIntervalValue) = ISBPVault(vault).getVaultState();
-        assertTrue(feeToAddr == bob);
+        assertEq(feeToAddr, bob);
         assertTrue(isFeeOn);
-        assertTrue(automationIntervalValue == newAutomationInterval);
+        assertEq(automationIntervalValue, newAutomationInterval);
     }
 
     function test__SBPVaultFactory_setVaultsParamsMassive() public {
         uint32 newAutomationInterval = 6 hours;
         address vault = deployVaultHelper();
         (address feeToAddr, bool isFeeOn,, uint32 automationIntervalValue) = ISBPVault(vault).getVaultState();
-        assertFalse(feeToAddr == bob);
+        assertNotEq(feeToAddr, bob);
         assertFalse(isFeeOn);
-        assertFalse(automationIntervalValue == newAutomationInterval);
+        assertNotEq(automationIntervalValue, newAutomationInterval);
         vm.prank(governor);
         vaultFactory.setVaultsParams(bob, true, newAutomationInterval, new address[](0));
         (feeToAddr, isFeeOn,, automationIntervalValue) = ISBPVault(vault).getVaultState();
-        assertTrue(feeToAddr == bob);
+        assertEq(feeToAddr, bob);
         assertTrue(isFeeOn);
-        assertTrue(automationIntervalValue == newAutomationInterval);
+        assertEq(automationIntervalValue, newAutomationInterval);
     }
 
     function test__SBPVaultFactory_checkUpkeep() public {
@@ -155,12 +117,13 @@ contract SBPVaultFactoryTest is Test {
         vm.warp(block.timestamp + 12 hours + 1);
         (upkeepNeeded, performData) = vaultFactory.checkUpkeep(abi.encode(0, 10));
         assertFalse(upkeepNeeded);
-        linkToken.transfer(vault, 1 ether);
+        linkToken.mintTo(vault, 1 ether);
         (upkeepNeeded, performData) = vaultFactory.checkUpkeep(abi.encode(0, 10));
         assertFalse(upkeepNeeded);
-        mockToken.transfer(vault, 1 ether);
+        mockToken.mintTo(vault, 1 ether);
         (upkeepNeeded, performData) = vaultFactory.checkUpkeep(abi.encode(0, 10));
-        assertTrue(upkeepNeeded && abi.decode(performData, (address)) == address(pairMock));
+        assertTrue(upkeepNeeded);
+        assertEq(abi.decode(performData, (address)), address(pairMock));
     }
 
     function test__SBPVaultFactory_performUpkeep() public {
@@ -168,12 +131,12 @@ contract SBPVaultFactoryTest is Test {
         (bool upkeepNeeded, bytes memory performData) = vaultFactory.checkUpkeep(abi.encode(0, 10));
         assertFalse(upkeepNeeded);
         vm.warp(block.timestamp + 12 hours + 1);
-        linkToken.transfer(vault, 1 ether);
-        mockToken.transfer(vault, 1 ether);
+        linkToken.mintTo(vault, 1 ether);
+        mockToken.mintTo(vault, 1 ether);
         vm.prank(governor);
-        ERC20(pairMock).transfer(address(router), 1 ether);
+        pairMock.transfer(address(router), 1 ether);
         (upkeepNeeded, performData) = vaultFactory.checkUpkeep(abi.encode(0, 10));
         vaultFactory.performUpkeep(performData);
-        assertTrue(ERC20(pairMock).balanceOf(vault) == initializationAmount + router.transferLpAmount());
+        assertEq(pairMock.balanceOf(vault), initAmount + router.transferLpAmount());
     }
 }

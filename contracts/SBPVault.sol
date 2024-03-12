@@ -128,7 +128,7 @@ contract SBPVault is ISBPVault, ERC20 {
 
     /// @inheritdoc ISBPVault
     function withdraw(uint256 amount) external {
-        if(amount == 0) revert SBPVault__ZeroSharesBurned();
+        if (amount == 0) revert SBPVault__ZeroSharesBurned();
         uint256 totalShares = totalSupply();
         _burn(msg.sender, amount);
         i_lpToken.safeTransfer(msg.sender, amount * i_lpToken.balanceOf(address(this)) / totalShares);
@@ -139,7 +139,7 @@ contract SBPVault is ISBPVault, ERC20 {
     function exit() external {
         uint256 amountShares = balanceOf(msg.sender);
         uint256 totalShares = totalSupply();
-        if(amountShares == 0) revert SBPVault__ZeroSharesBurned();
+        if (amountShares == 0) revert SBPVault__ZeroSharesBurned();
         _burn(msg.sender, amountShares);
         _liquefyRewards();
         i_lpToken.safeTransfer(msg.sender, amountShares * i_lpToken.balanceOf(address(this)) / totalShares);
