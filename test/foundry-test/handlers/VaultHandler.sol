@@ -47,14 +47,16 @@ contract VaultHandler is CommonBase, StdCheats, StdUtils {
 
     function withdraw(uint256 actorIndex, uint256 amount) external useActor(actorIndex) {
         amount = bound(amount, 0, vault.balanceOf(currentActor));
-        vm.prank(currentActor);
+        vm.startPrank(currentActor);
         vault.withdraw(amount);
+        vm.stopPrank();
     }
 
     function exit(uint256 actorIndex) external useActor(actorIndex) {
         _countRewardsLiquefied();
-        vm.prank(currentActor);
+        vm.startPrank(currentActor);
         vault.exit();
+        vm.stopPrank();
     }
 
     function liquefyRewards() external {

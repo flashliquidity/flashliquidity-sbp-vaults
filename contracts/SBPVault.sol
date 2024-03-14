@@ -7,6 +7,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ISBPVault} from "./interfaces/ISBPVault.sol";
 import {IAddLiquidityRouter} from "./interfaces/IAddLiquidityRouter.sol";
 import {IPairReserves} from "./interfaces/IPairReserves.sol";
+import {IFlashLiquidityERC20Permit} from "./interfaces/IFlashLiquidityERC20Permit.sol";
 
 /**
  * @title SBPVault
@@ -118,12 +119,15 @@ contract SBPVault is ISBPVault, ERC20 {
 
     /// @inheritdoc ISBPVault
     function stake(uint256 amount) external {
-        if (amount == 0) revert SBPVault__StakingAmountIsZero();
-        uint256 amountSharesToMint = amount * totalSupply() / i_lpToken.balanceOf(address(this));
-        if (amountSharesToMint == 0) revert SBPVault__ZeroSharesMinted();
-        _mint(msg.sender, amountSharesToMint);
+        _onStake(amount);
         i_lpToken.safeTransferFrom(msg.sender, address(this), amount);
-        emit Staked(msg.sender, amount);
+    }
+
+    /// @inheritdoc ISBPVault
+    function stakeWithPermit(uint256 amount, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
+        _onStake(amount);
+        IFlashLiquidityERC20Permit(address(i_lpToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        i_lpToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /// @inheritdoc ISBPVault
@@ -152,11 +156,23 @@ contract SBPVault is ISBPVault, ERC20 {
     }
 
     /**
+     * @param amount The amount of LP tokens staked.
+     */
+    function _onStake(uint256 amount) internal {
+        if (amount == 0) revert SBPVault__StakingAmountIsZero();
+        uint256 amountSharesToMint = amount * totalSupply() / i_lpToken.balanceOf(address(this));
+        if (amountSharesToMint == 0) revert SBPVault__ZeroSharesMinted();
+        _mint(msg.sender, amountSharesToMint);
+        emit Staked(msg.sender, amount);
+    }
+
+    /**
      * @dev Internal function to autocompound accumulated rewards into LP tokens.
-     * @notice This function updates the last liquefied timestamp and adds liquidity using the balances of token0 and token1.
-     *         After liquidity is added, if the fee mechanism is active ('feeOn' is true),
-     *         a portion of the resulting LP tokens, calculated as per the defined FEE,
-     *         is transferred to the fee recipient address stored in the vault state.
+     * @notice This function updates the last liquidity-added timestamp and adds liquidity using the balances of token0 and token1.
+     *         After liquidity is added, if the fee mechanism ('feeOn') is active, a portion of the resulting LP tokens, 
+     *         calculated based on the defined FEE, is transferred to the fee recipient address stored in the vault's state.
+     * @notice Setting minimum amounts for token0 and token1 (amount0Min and amount1Min) when adding liquidity is unnecessary 
+     *         since self-balancing pools are not open to public trading.
      */
     function _liquefyRewards() internal {
         (uint256 balance0, uint256 balance1) = _getRewardsToLiquefy();
