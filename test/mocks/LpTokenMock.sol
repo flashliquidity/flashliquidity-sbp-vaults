@@ -3,15 +3,16 @@
 pragma solidity ^0.8.0;
 
 import {IERC20, ERC20Mock} from "./ERC20Mock.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-contract LpTokenMock is ERC20Mock {
+contract LpTokenMock is ERC20Mock, ERC20Permit {
     IERC20 private immutable i_token0;
     IERC20 private immutable i_token1;
 
     constructor(
         address tokenA,
         address tokenB
-    ) ERC20Mock("MockLP", "MOCKLP") {
+    ) ERC20Mock("MockLP", "MOCKLP") ERC20Permit("MOCKLP") {
         i_token0 = IERC20(tokenA);
         i_token1 = IERC20(tokenB);
     }

@@ -3,11 +3,11 @@
 pragma solidity 0.8.19;
 
 import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Permit, IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ISBPVault} from "./interfaces/ISBPVault.sol";
 import {IAddLiquidityRouter} from "./interfaces/IAddLiquidityRouter.sol";
 import {IPairReserves} from "./interfaces/IPairReserves.sol";
-import {IFlashLiquidityERC20Permit} from "./interfaces/IFlashLiquidityERC20Permit.sol";
 
 /**
  * @title SBPVault
@@ -15,7 +15,7 @@ import {IFlashLiquidityERC20Permit} from "./interfaces/IFlashLiquidityERC20Permi
  * @notice This contract allows users to stake liquidity provider (LP) tokens, automatically compound rewards, and withdraw their stakes.
  * @author Oddcod3 (@oddcod3)
  */
-contract SBPVault is ISBPVault, ERC20 {
+contract SBPVault is ISBPVault, ERC20, ERC20Permit {
     using SafeERC20 for IERC20;
 
     error SBPVault__InitializerTimelock();
@@ -77,7 +77,7 @@ contract SBPVault is ISBPVault, ERC20 {
         uint32 automationInterval,
         string memory name,
         string memory symbol
-    ) ERC20(name, symbol) {
+    ) ERC20(name, symbol) ERC20Permit(name) {
         i_vaultFactory = msg.sender;
         i_lpToken = IERC20(lpToken);
         i_router = IAddLiquidityRouter(router);
@@ -126,7 +126,7 @@ contract SBPVault is ISBPVault, ERC20 {
     /// @inheritdoc ISBPVault
     function stakeWithPermit(uint256 amount, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
         _onStake(amount);
-        IFlashLiquidityERC20Permit(address(i_lpToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        IERC20Permit(address(i_lpToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         i_lpToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 

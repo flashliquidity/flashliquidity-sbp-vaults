@@ -9,6 +9,7 @@ import {Governable} from "flashliquidity-acs/contracts/Governable.sol";
 import {ERC20, ERC20Mock} from "../../mocks/ERC20Mock.sol";
 import {LpTokenMock} from "../../mocks/LpTokenMock.sol";
 import {RouterMock} from "../../mocks/RouterMock.sol";
+import {SigUtils} from "../../utils/SigUtils.sol";
 
 contract SBPVaultTest is Test {
     SBPVault public vault;
@@ -16,8 +17,10 @@ contract SBPVaultTest is Test {
     ERC20Mock public linkToken;
     ERC20Mock public mockToken;
     LpTokenMock public pairMock;
+    SigUtils internal sigUtils;
+    uint256 bobPrivateKey = 0xB00B5;
     address public governor = makeAddr("governor");
-    address public bob = makeAddr("bob");
+    address public bob = vm.addr(bobPrivateKey);
     address public feeTo = makeAddr("feeTo");
     address public vaultFactory = makeAddr("vaultFactory");
     address public initializer = makeAddr("initializer");
@@ -45,6 +48,7 @@ contract SBPVaultTest is Test {
         pairMock = new LpTokenMock(address(linkToken), address(mockToken));
         pairMock.mintTo(bob, 1000 ether);
         router = new RouterMock(address(linkToken), address(mockToken), address(pairMock));
+        sigUtils = new SigUtils();
         linkToken.mintTo(address(pairMock), 1 ether);
         mockToken.mintTo(address(pairMock), 1 ether);
         vm.prank(vaultFactory);
@@ -102,6 +106,49 @@ contract SBPVaultTest is Test {
         vault.stake(stakingAmount);
         vm.stopPrank();
         assertEq(vault.balanceOf(bob), 1 ether);
+    }
+
+    function test__SBPVault_stakeWithPermit() public {
+        initializeVaultHelper();
+        uint256 stakingAmount = 1 ether;
+        SigUtils.Permit memory permit = SigUtils.Permit({
+            owner: bob,
+            spender: address(vault),
+            value: stakingAmount,
+            nonce: 0,
+            deadline: 1 days
+        });
+        bytes32 digest = sigUtils.getTypedDataHash(permit, pairMock.DOMAIN_SEPARATOR());
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(bobPrivateKey, digest);
+        vm.startPrank(bob);
+        vault.stakeWithPermit(permit.value, permit.deadline, v, r, s);
+        vm.stopPrank();
+        assertEq(vault.balanceOf(bob), 1 ether);
+    }
+
+    function test__SBPVault_permit() public {
+        uint256 permitAmount = 1 ether;
+        SigUtils.Permit memory permit = SigUtils.Permit({
+            owner: bob,
+            spender: governor,
+            value: permitAmount,
+            nonce: 0,
+            deadline: 1 days
+        });
+        bytes32 digest = sigUtils.getTypedDataHash(permit, vault.DOMAIN_SEPARATOR());
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(bobPrivateKey, digest);
+        assertEq(vault.allowance(bob, governor), 0);
+        vault.permit(
+            permit.owner,
+            permit.spender,
+            permit.value,
+            permit.deadline,
+            v,
+            r,
+            s
+        );
+        assertEq(vault.allowance(bob, governor), permitAmount);
+        assertEq(vault.nonces(bob), 1);
     }
 
     function test__SBPVault_withdraw() public {
