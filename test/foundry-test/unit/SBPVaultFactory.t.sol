@@ -22,15 +22,12 @@ contract SBPVaultFactoryTest is Test {
     address public feeTo = makeAddr("feeTo");
     uint256 public initAmount = 1 ether;
     uint32 public automationInterval = 12 hours;
-    string public vaultName = "SelfBalancingMOCKLINK";
-    string public vaultSymbol = "sbpMOCK/LINK";
+    string public vaultSymbol = "SBPV-MOCK/LINK";
 
     function deployVaultHelper() public returns (address) {
         vm.startPrank(governor);
         pairMock.approve(address(vaultFactory), 1 ether);
-        vaultFactory.deployVault(
-            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
-        );
+        vaultFactory.deployVault(address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultSymbol);
         vm.stopPrank();
         return vaultFactory.getVault(address(pairMock));
     }
@@ -48,27 +45,19 @@ contract SBPVaultFactoryTest is Test {
 
     function test__SBPVaultFactory_deployVault() public {
         vm.expectRevert(Governable.Governable__NotAuthorized.selector);
-        vaultFactory.deployVault(
-            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
-        );
+        vaultFactory.deployVault(address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultSymbol);
         vm.startPrank(governor);
         vm.expectRevert("ERC20: insufficient allowance");
-        vaultFactory.deployVault(
-            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
-        );
+        vaultFactory.deployVault(address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultSymbol);
         pairMock.approve(address(vaultFactory), initAmount);
         uint256 balanceBefore = pairMock.balanceOf(governor);
-        vaultFactory.deployVault(
-            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
-        );
+        vaultFactory.deployVault(address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultSymbol);
         address vaultToken = vaultFactory.getVault(address(pairMock));
         assertNotEq(vaultToken, address(0));
         assertEq(ERC20(vaultToken).balanceOf(governor), initAmount);
         assertEq(pairMock.balanceOf(governor), balanceBefore - initAmount);
         vm.expectRevert(SBPVaultFactory.SBPVaultFactory__VaultAlreadyDeployed.selector);
-        vaultFactory.deployVault(
-            address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultName, vaultSymbol
-        );
+        vaultFactory.deployVault(address(pairMock), governor, feeTo, false, initAmount, automationInterval, vaultSymbol);
         vm.stopPrank();
     }
 

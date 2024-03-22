@@ -26,8 +26,7 @@ contract SBPVaultInvariantTest is Test {
     address public initializer = makeAddr("initializer");
     uint256 public initializationAmount = 1_000_000_000;
     uint32 public automationInterval = 12 hours;
-    string public vaultName = "SelfBalancingMOCKLINK";
-    string public vaultSymbol = "sbpMOCK/LINK";
+    string public vaultSymbol = "SBPV-MOCK/LINK";
 
     function setUp() public {
         linkToken = new ERC20Mock("LINK", "LINK");
@@ -35,9 +34,8 @@ contract SBPVaultInvariantTest is Test {
         pairMock = new LpTokenMock(address(linkToken), address(mockToken));
         router = new RouterMock(address(linkToken), address(mockToken), address(pairMock));
         vm.prank(vaultFactory);
-        vault = new SBPVault(
-            address(pairMock), address(router), initializer, feeTo, true, automationInterval, vaultName, vaultSymbol
-        );
+        vault =
+            new SBPVault(address(pairMock), address(router), initializer, feeTo, true, automationInterval, vaultSymbol);
         pairMock.mintTo(address(vault), initializationAmount);
         vm.prank(vaultFactory);
         vault.initialize(initializationAmount);

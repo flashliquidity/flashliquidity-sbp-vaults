@@ -28,7 +28,7 @@ interface ISBPVault {
 
     /**
      * @dev Allows a user to stake LP tokens in the vault using the permit function.
-     *      This method enables users to approve and stake tokens in a single transaction, 
+     *      This method enables users to approve and stake tokens in a single transaction,
      *      bypassing the need for a separate approval transaction.
      * @param amount The amount of LP tokens the user wishes to stake.
      * @param deadline The timestamp until which the permit is valid. The transaction must be mined before this time.
@@ -36,7 +36,7 @@ interface ISBPVault {
      * @param r Half of the ECDSA signature pair; a part of the EIP-712 signature standard.
      * @param s Half of the ECDSA signature pair; a part of the EIP-712 signature standard.
      */
-    function stakeWithPermit(uint256 amount, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+    function stakeWithPermit(uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
 
     /**
      * @dev Allows a user to withdraw their staked LP tokens and any accrued rewards from the vault.

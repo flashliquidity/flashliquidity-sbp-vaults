@@ -26,8 +26,7 @@ contract SBPVaultTest is Test {
     address public initializer = makeAddr("initializer");
     uint256 public initializationAmount = 1_000_000_000;
     uint32 public automationInterval = 12 hours;
-    string public vaultName = "SelfBalancingMOCKLINK";
-    string public vaultSymbol = "sbpMOCK/LINK";
+    string public vaultSymbol = "SBPV-MOCK/LINK";
 
     function initializeVaultHelper() public {
         pairMock.mintTo(address(vault), initializationAmount);
@@ -52,9 +51,8 @@ contract SBPVaultTest is Test {
         linkToken.mintTo(address(pairMock), 1 ether);
         mockToken.mintTo(address(pairMock), 1 ether);
         vm.prank(vaultFactory);
-        vault = new SBPVault(
-            address(pairMock), address(router), initializer, feeTo, false, automationInterval, vaultName, vaultSymbol
-        );
+        vault =
+            new SBPVault(address(pairMock), address(router), initializer, feeTo, false, automationInterval, vaultSymbol);
     }
 
     function test__SBPVault_initialize() public {
@@ -111,13 +109,8 @@ contract SBPVaultTest is Test {
     function test__SBPVault_stakeWithPermit() public {
         initializeVaultHelper();
         uint256 stakingAmount = 1 ether;
-        SigUtils.Permit memory permit = SigUtils.Permit({
-            owner: bob,
-            spender: address(vault),
-            value: stakingAmount,
-            nonce: 0,
-            deadline: 1 days
-        });
+        SigUtils.Permit memory permit =
+            SigUtils.Permit({owner: bob, spender: address(vault), value: stakingAmount, nonce: 0, deadline: 1 days});
         bytes32 digest = sigUtils.getTypedDataHash(permit, pairMock.DOMAIN_SEPARATOR());
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(bobPrivateKey, digest);
         vm.startPrank(bob);
@@ -128,25 +121,12 @@ contract SBPVaultTest is Test {
 
     function test__SBPVault_permit() public {
         uint256 permitAmount = 1 ether;
-        SigUtils.Permit memory permit = SigUtils.Permit({
-            owner: bob,
-            spender: governor,
-            value: permitAmount,
-            nonce: 0,
-            deadline: 1 days
-        });
+        SigUtils.Permit memory permit =
+            SigUtils.Permit({owner: bob, spender: governor, value: permitAmount, nonce: 0, deadline: 1 days});
         bytes32 digest = sigUtils.getTypedDataHash(permit, vault.DOMAIN_SEPARATOR());
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(bobPrivateKey, digest);
         assertEq(vault.allowance(bob, governor), 0);
-        vault.permit(
-            permit.owner,
-            permit.spender,
-            permit.value,
-            permit.deadline,
-            v,
-            r,
-            s
-        );
+        vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
         assertEq(vault.allowance(bob, governor), permitAmount);
         assertEq(vault.nonces(bob), 1);
     }

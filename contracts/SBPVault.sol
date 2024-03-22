@@ -15,7 +15,7 @@ import {IPairReserves} from "./interfaces/IPairReserves.sol";
  * @notice This contract allows users to stake liquidity provider (LP) tokens, automatically compound rewards, and withdraw their stakes.
  * @author Oddcod3 (@oddcod3)
  */
-contract SBPVault is ISBPVault, ERC20, ERC20Permit {
+contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     using SafeERC20 for IERC20;
 
     error SBPVault__InitializerTimelock();
@@ -75,9 +75,8 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit {
         address feeTo,
         bool feeOn,
         uint32 automationInterval,
-        string memory name,
         string memory symbol
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    ) ERC20("SBPV", symbol) {
         i_vaultFactory = msg.sender;
         i_lpToken = IERC20(lpToken);
         i_router = IAddLiquidityRouter(router);
@@ -124,7 +123,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit {
     }
 
     /// @inheritdoc ISBPVault
-    function stakeWithPermit(uint256 amount, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
+    function stakeWithPermit(uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         _onStake(amount);
         IERC20Permit(address(i_lpToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         i_lpToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -169,9 +168,9 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit {
     /**
      * @dev Internal function to autocompound accumulated rewards into LP tokens.
      * @notice This function updates the last liquidity-added timestamp and adds liquidity using the balances of token0 and token1.
-     *         After liquidity is added, if the fee mechanism ('feeOn') is active, a portion of the resulting LP tokens, 
+     *         After liquidity is added, if the fee mechanism ('feeOn') is active, a portion of the resulting LP tokens,
      *         calculated based on the defined FEE, is transferred to the fee recipient address stored in the vault's state.
-     * @notice Setting minimum amounts for token0 and token1 (amount0Min and amount1Min) when adding liquidity is unnecessary 
+     * @notice Setting minimum amounts for token0 and token1 (amount0Min and amount1Min) when adding liquidity is unnecessary
      *         since self-balancing pools are not open to public trading.
      */
     function _liquefyRewards() internal {

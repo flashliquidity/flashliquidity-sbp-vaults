@@ -22,7 +22,6 @@ interface ISBPVaultFactory {
      * @param feeOn A boolean indicating whether the fee mechanism is active.yarn
      * @param initializationAmount The amount of LP tokens to be transferred to the vault upon initialization.
      * @param automationInterval The minimum interval in seconds between rewards autocompounding (liquefyRewards) via Chainlink Automation.
-     * @param name The name for the new vault.
      * @param symbol The symbol for the new vault.
      * @notice This function will revert with 'SBPFarmFactory__AlreadyDeployed' if a vault for the specified LP token already exists.
      */
@@ -33,7 +32,6 @@ interface ISBPVaultFactory {
         bool feeOn,
         uint256 initializationAmount,
         uint32 automationInterval,
-        string memory name,
         string memory symbol
     ) external;
 
