@@ -72,6 +72,15 @@ interface ISBPVault {
         returns (address feeTo, bool feeOn, uint48 lastLiquefiedTimestamp, uint32 automationInterval);
 
     /**
+     * @dev Calculates the rate of vault shares to LP tokens.
+     * This function provides the conversion rate from the amount of vault shares 
+     * to the equivalent amount in LP tokens based on the current balance and total supply.
+     * @param amountShares The amount of vault shares to be converted.
+     * @return rate The calculated rate of vault shares to LP tokens.
+     */
+    function getVaultSharesToLpToken(uint256 amountShares) external view returns (uint256 rate);
+
+    /**
      * @dev Returns the current balances of the reward tokens held by the contract.
      * @return token0 The address of the first reward token.
      * @return token1 The address of the second reward token.

@@ -240,6 +240,11 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     }
 
     /// @inheritdoc ISBPVault
+    function getVaultSharesToLpToken(uint256 amountShares) external view returns (uint256) {
+        return amountShares * i_lpToken.balanceOf(address(this)) / totalSupply();
+    }
+
+    /// @inheritdoc ISBPVault
     function getRewardTokensBalance() external view returns (address, address, uint256, uint256) {
         (uint256 balance0, uint256 balance1) = _getRewardsToLiquefy();
         return (i_token0, i_token1, balance0, balance1);
