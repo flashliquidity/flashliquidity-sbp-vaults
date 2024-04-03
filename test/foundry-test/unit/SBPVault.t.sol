@@ -25,6 +25,7 @@ contract SBPVaultTest is Test {
     address public vaultFactory = makeAddr("vaultFactory");
     address public initializer = makeAddr("initializer");
     uint256 public initializationAmount = 1_000_000_000;
+    uint16 public fee = 200;
     uint32 public automationInterval = 12 hours;
     string public vaultSymbol = "SBPV-MOCK/LINK";
 
@@ -51,8 +52,9 @@ contract SBPVaultTest is Test {
         linkToken.mintTo(address(pairMock), 1 ether);
         mockToken.mintTo(address(pairMock), 1 ether);
         vm.prank(vaultFactory);
-        vault =
-            new SBPVault(address(pairMock), address(router), initializer, feeTo, false, automationInterval, vaultSymbol);
+        vault = new SBPVault(
+            address(router), address(pairMock), initializer, feeTo, false, fee, automationInterval, vaultSymbol
+        );
     }
 
     function test__SBPVault_initialize() public {
@@ -77,17 +79,23 @@ contract SBPVaultTest is Test {
 
     function test__SBPVault_setVaultParams() public {
         uint32 newAutomationInterval = 6 hours;
-        (address feeToAddr, bool feeOnValue,, uint32 automationIntervalValue) = vault.getVaultState();
+        uint16 newFeeValue = 500;
+        (address feeToAddr, bool feeOnValue, uint16 feeValue,, uint32 automationIntervalValue) = vault.getVaultState();
         assertNotEq(feeToAddr, bob);
         assertFalse(feeOnValue);
+        assertNotEq(feeValue, newFeeValue);
         assertNotEq(automationIntervalValue, newAutomationInterval);
         vm.expectRevert(SBPVault.SBPVault__NotVaultFactory.selector);
-        vault.setVaultParams(bob, true, newAutomationInterval);
-        vm.prank(vaultFactory);
-        vault.setVaultParams(bob, true, newAutomationInterval);
-        (feeToAddr, feeOnValue,, automationIntervalValue) = vault.getVaultState();
+        vault.setVaultParams(bob, true, newFeeValue, newAutomationInterval);
+        vm.startPrank(vaultFactory);
+        vm.expectRevert(SBPVault.SBPVault__ExcessiveFeeValue.selector);
+        vault.setVaultParams(bob, true, 501, newAutomationInterval);
+        vault.setVaultParams(bob, true, newFeeValue, newAutomationInterval);
+        vm.stopPrank();
+        (feeToAddr, feeOnValue, feeValue,, automationIntervalValue) = vault.getVaultState();
         assertEq(feeToAddr, bob);
         assertTrue(feeOnValue);
+        assertEq(feeValue, newFeeValue);
         assertEq(automationIntervalValue, newAutomationInterval);
     }
 

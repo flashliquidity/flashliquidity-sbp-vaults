@@ -15,7 +15,7 @@ import {IPairReserves} from "./interfaces/IPairReserves.sol";
  * @notice This contract allows users to stake liquidity provider (LP) tokens, automatically compound rewards, and withdraw their stakes.
  * @author Oddcod3 (@oddcod3)
  */
-contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
+contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
     using SafeERC20 for IERC20;
 
     error SBPVault__InitializerTimelock();
@@ -25,9 +25,10 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     error SBPVault__StakingAmountIsZero();
     error SBPVault__ZeroSharesMinted();
     error SBPVault__ZeroSharesBurned();
+    error SBPVault__ExcessiveFeeValue();
 
-    /// @dev Fee charged for rebalancing operations plus rewards autocompounding, represented in basis points (parts per 10,000).
-    uint256 public constant FEE = 200;
+    /// @dev Maximum fee charged for rebalancing operations and rewards auto-compounding, represented in basis points (parts per 10,000).
+    uint256 public constant MAX_FEE = 500;
     /// @dev Vault shares time lock period for the initializer, set to 7 days.
     uint256 public constant INITIALIZER_TIMELOCK = 7 days;
     /// @dev Minimum amount of LP tokens required to initialize the vault.
@@ -54,6 +55,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     struct VaultState {
         address feeTo; // Address to which fees are sent
         bool feeOn; // Flag indicating whether fees are currently enabled
+        uint16 fee; // Fee charged for rebalancing operations plus rewards autocompounding, represented in basis points (parts per 10,000).
         uint48 lastLiquefiedTimestamp; // Timestamp of the last reward liquefaction
         uint32 automationInterval; // Interval for automatic reward liquefaction
     }
@@ -61,7 +63,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     event Staked(address indexed staker, uint256 amount);
     event Withdrawn(address indexed withdrawer, uint256 amount);
     event Liquefied(uint256 balance0, uint256 balance1, uint256 liquidity);
-    event VaultStateChanged(address feeTo, bool feeOn, uint32 automationInterval);
+    event VaultStateChanged(address feeTo, bool feeOn, uint16 fee, uint32 automationInterval);
 
     modifier onlyVaultFactory() {
         _revertIfNotFactory();
@@ -69,17 +71,19 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     }
 
     constructor(
-        address lpToken,
         address router,
+        address lpToken,
         address initializer,
         address feeTo,
         bool feeOn,
+        uint16 fee,
         uint32 automationInterval,
         string memory symbol
-    ) ERC20("SBPV", symbol) {
+    ) ERC20("SBPVault", symbol) {
+        if (fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
         i_vaultFactory = msg.sender;
-        i_lpToken = IERC20(lpToken);
         i_router = IAddLiquidityRouter(router);
+        i_lpToken = IERC20(lpToken);
         i_initializer = initializer;
         i_initializationTimestamp = block.timestamp;
         IPairReserves pair = IPairReserves(lpToken);
@@ -89,6 +93,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
         s_vaultState = VaultState({
             feeTo: feeTo,
             feeOn: feeOn,
+            fee: fee,
             lastLiquefiedTimestamp: uint48(block.timestamp),
             automationInterval: automationInterval
         });
@@ -108,12 +113,17 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     }
 
     /// @inheritdoc ISBPVault
-    function setVaultParams(address feeTo, bool feeOn, uint32 automationInterval) external onlyVaultFactory {
+    function setVaultParams(address feeTo, bool feeOn, uint16 fee, uint32 automationInterval)
+        external
+        onlyVaultFactory
+    {
+        if (fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
         VaultState storage vaultState = s_vaultState;
         vaultState.feeTo = feeTo;
         vaultState.feeOn = feeOn;
+        vaultState.fee = fee;
         vaultState.automationInterval = automationInterval;
-        emit VaultStateChanged(feeTo, feeOn, automationInterval);
+        emit VaultStateChanged(feeTo, feeOn, fee, automationInterval);
     }
 
     /// @inheritdoc ISBPVault
@@ -181,8 +191,8 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
             (,, uint256 liquidity) =
                 i_router.addLiquidity(i_token0, i_token1, balance0, balance1, 1, 1, address(this), block.timestamp);
             uint256 feeAmount;
-            if (vaultState.feeOn) {
-                feeAmount = liquidity * FEE / 10_000;
+            if (vaultState.feeOn && vaultState.fee > 0) {
+                feeAmount = liquidity * vaultState.fee / 10_000;
                 liquidity = liquidity - feeAmount;
                 i_lpToken.safeTransfer(vaultState.feeTo, feeAmount);
             }
@@ -230,11 +240,12 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPV") {
     function getVaultState()
         external
         view
-        returns (address feeTo, bool feeOn, uint48 lastLiquefiedTimestamp, uint32 automationInterval)
+        returns (address feeTo, bool feeOn, uint16 fee, uint48 lastLiquefiedTimestamp, uint32 automationInterval)
     {
         VaultState memory vaultState = s_vaultState;
         feeTo = vaultState.feeTo;
         feeOn = vaultState.feeOn;
+        fee = vaultState.fee;
         lastLiquefiedTimestamp = vaultState.lastLiquefiedTimestamp;
         automationInterval = vaultState.automationInterval;
     }

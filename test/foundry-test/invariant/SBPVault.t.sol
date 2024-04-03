@@ -26,6 +26,7 @@ contract SBPVaultInvariantTest is Test {
     address public initializer = makeAddr("initializer");
     uint256 public initializationAmount = 1_000_000_000;
     uint32 public automationInterval = 12 hours;
+    uint16 public fee = 200;
     string public vaultSymbol = "SBPV-MOCK/LINK";
 
     function setUp() public {
@@ -34,8 +35,9 @@ contract SBPVaultInvariantTest is Test {
         pairMock = new LpTokenMock(address(linkToken), address(mockToken));
         router = new RouterMock(address(linkToken), address(mockToken), address(pairMock));
         vm.prank(vaultFactory);
-        vault =
-            new SBPVault(address(pairMock), address(router), initializer, feeTo, true, automationInterval, vaultSymbol);
+        vault = new SBPVault(
+            address(router), address(pairMock), initializer, feeTo, true, fee, automationInterval, vaultSymbol
+        );
         pairMock.mintTo(address(vault), initializationAmount);
         vm.prank(vaultFactory);
         vault.initialize(initializationAmount);

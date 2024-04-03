@@ -20,6 +20,7 @@ contract SBPVaultFactory is ISBPVaultFactory, AutomationCompatibleInterface, Gov
 
     error SBPVaultFactory__InvalidVault();
     error SBPVaultFactory__VaultAlreadyDeployed();
+    error SBPVaultFactory__InconsistentParamsLength();
 
     /// @dev The address of the router used for interacting with liquidity pools.
     address private immutable i_router;
@@ -35,20 +36,22 @@ contract SBPVaultFactory is ISBPVaultFactory, AutomationCompatibleInterface, Gov
     }
 
     /// @inheritdoc ISBPVaultFactory
-    function setVaultsParams(address feeTo, bool feeOn, uint32 automationInterval, address[] memory lpTokens)
-        external
-        onlyGovernor
-    {
-        uint256 lpTokensLength = lpTokens.length;
-        address vault;
-        if (lpTokensLength == 0) {
-            lpTokens = s_lpTokens;
-            lpTokensLength = lpTokens.length;
+    function setVaultsParams(
+        address[] calldata vaults,
+        address[] calldata feesTo,
+        bool[] calldata feesOn,
+        uint16[] calldata fees,
+        uint32[] calldata automationIntervals
+    ) external onlyGovernor {
+        uint256 vaultsLen = vaults.length;
+        if (
+            vaultsLen != feesTo.length || vaultsLen != feesOn.length || vaultsLen != fees.length
+                || vaultsLen != automationIntervals.length
+        ) {
+            revert SBPVaultFactory__InconsistentParamsLength();
         }
-        for (uint256 i; i < lpTokensLength;) {
-            vault = s_lpTokenVault[lpTokens[i]];
-            if (vault == address(0)) revert SBPVaultFactory__InvalidVault();
-            ISBPVault(vault).setVaultParams(feeTo, feeOn, automationInterval);
+        for (uint256 i; i < vaultsLen;) {
+            ISBPVault(vaults[i]).setVaultParams(feesTo[i], feesOn[i], fees[i], automationIntervals[i]);
             unchecked {
                 ++i;
             }
@@ -59,15 +62,17 @@ contract SBPVaultFactory is ISBPVaultFactory, AutomationCompatibleInterface, Gov
     function deployVault(
         address lpToken,
         address initializer,
+        uint256 initializationAmount,
         address feeTo,
         bool feeOn,
-        uint256 initializationAmount,
+        uint16 fee,
         uint32 automationInterval,
         string memory symbol
     ) external onlyGovernor {
         if (s_lpTokenVault[lpToken] != address(0)) revert SBPVaultFactory__VaultAlreadyDeployed();
         s_lpTokens.push(lpToken);
-        address vault = address(new SBPVault(lpToken, i_router, initializer, feeTo, feeOn, automationInterval, symbol));
+        address vault =
+            address(new SBPVault(i_router, lpToken, initializer, feeTo, feeOn, fee, automationInterval, symbol));
         s_lpTokenVault[lpToken] = vault;
         IERC20(lpToken).safeTransferFrom(initializer, vault, initializationAmount);
         ISBPVault(vault).initialize(initializationAmount);
