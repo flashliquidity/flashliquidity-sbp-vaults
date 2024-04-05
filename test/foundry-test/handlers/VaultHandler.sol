@@ -38,6 +38,7 @@ contract VaultHandler is CommonBase, StdCheats, StdUtils {
 
     function stake(uint256 amount) external createActor {
         amount = bound(amount, 0, type(uint256).max - vaultLpToken.totalSupply() - 1);
+        _countRewardsLiquefied();
         vm.startPrank(currentActor);
         vaultLpToken.mintTo(currentActor, amount);
         vaultLpToken.approve(address(vault), amount);

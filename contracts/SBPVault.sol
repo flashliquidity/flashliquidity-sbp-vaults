@@ -128,12 +128,14 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
 
     /// @inheritdoc ISBPVault
     function stake(uint256 amount) external {
+        _liquefyRewards();
         _onStake(amount);
         i_lpToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /// @inheritdoc ISBPVault
     function stakeWithPermit(uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        _liquefyRewards();
         _onStake(amount);
         IERC20Permit(address(i_lpToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         i_lpToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -179,7 +181,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
      * @dev Internal function to autocompound accumulated rewards into LP tokens.
      * @notice This function updates the last liquidity-added timestamp and adds liquidity using the balances of token0 and token1.
      *         After liquidity is added, if the fee mechanism ('feeOn') is active, a portion of the resulting LP tokens,
-     *         calculated based on the defined FEE, is transferred to the fee recipient address stored in the vault's state.
+     *         calculated based on the defined fee, is transferred to the fee recipient address stored in the vault's state.
      * @notice Setting minimum amounts for token0 and token1 (amount0Min and amount1Min) when adding liquidity is unnecessary
      *         since self-balancing pools are not open to public trading.
      */
