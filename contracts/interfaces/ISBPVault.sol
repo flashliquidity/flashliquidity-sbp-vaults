@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 interface ISBPVault {
-
     struct VaultState {
         address feeTo; // Address to which fees are sent
         bool feeOn; // Flag indicating whether fees are currently enabled
@@ -73,10 +72,7 @@ interface ISBPVault {
      * @dev Retrieves the current state of the vault, including fee recipient, fee status, last liquefied timestamp, and automation interval.
      * @return vaultState Vault state struct.
      */
-    function getVaultState()
-        external
-        view
-        returns (VaultState memory vaultState);
+    function getVaultState() external view returns (VaultState memory vaultState);
 
     /**
      * @dev Calculates the rate of vault shares to LP tokens.

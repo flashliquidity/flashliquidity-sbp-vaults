@@ -231,11 +231,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
     }
 
     /// @inheritdoc ISBPVault
-    function getVaultState()
-        external
-        view
-        returns (VaultState memory)
-    {
+    function getVaultState() external view returns (VaultState memory) {
         return s_vaultState;
     }
 
