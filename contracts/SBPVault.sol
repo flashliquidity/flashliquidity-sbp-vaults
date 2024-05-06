@@ -72,7 +72,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
         uint32 automationInterval,
         string memory symbol
     ) ERC20("SBPVault", symbol) {
-        if (fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
+        _revertIfExcessiveFeeValue(fee);
         i_vaultFactory = msg.sender;
         i_router = IAddLiquidityRouter(router);
         i_lpToken = IERC20(lpToken);
@@ -109,7 +109,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
         external
         onlyVaultFactory
     {
-        if (fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
+        _revertIfExcessiveFeeValue(fee);
         VaultState storage vaultState = s_vaultState;
         vaultState.feeTo = feeTo;
         vaultState.feeOn = feeOn;
@@ -207,6 +207,10 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
     ///@dev Revert if msg.sender is not the vault factory.
     function _revertIfNotFactory() internal view {
         if (msg.sender != i_vaultFactory) revert SBPVault__NotVaultFactory();
+    }
+
+    function _revertIfExcessiveFeeValue(uint24 fee) internal pure {
+        if(fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
     }
 
     /**
