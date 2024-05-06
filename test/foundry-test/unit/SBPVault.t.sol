@@ -80,11 +80,11 @@ contract SBPVaultTest is Test {
     function test__SBPVault_setVaultParams() public {
         uint32 newAutomationInterval = 6 hours;
         uint16 newFeeValue = 500;
-        (address feeToAddr, bool feeOnValue, uint16 feeValue,, uint32 automationIntervalValue) = vault.getVaultState();
-        assertNotEq(feeToAddr, bob);
-        assertFalse(feeOnValue);
-        assertNotEq(feeValue, newFeeValue);
-        assertNotEq(automationIntervalValue, newAutomationInterval);
+        SBPVault.VaultState memory vaultState = vault.getVaultState();
+        assertNotEq(vaultState.feeTo, bob);
+        assertFalse(vaultState.feeOn);
+        assertNotEq(vaultState.fee, newFeeValue);
+        assertNotEq(vaultState.automationInterval, newAutomationInterval);
         vm.expectRevert(SBPVault.SBPVault__NotVaultFactory.selector);
         vault.setVaultParams(bob, true, newFeeValue, newAutomationInterval);
         vm.startPrank(vaultFactory);
@@ -92,11 +92,11 @@ contract SBPVaultTest is Test {
         vault.setVaultParams(bob, true, 501, newAutomationInterval);
         vault.setVaultParams(bob, true, newFeeValue, newAutomationInterval);
         vm.stopPrank();
-        (feeToAddr, feeOnValue, feeValue,, automationIntervalValue) = vault.getVaultState();
-        assertEq(feeToAddr, bob);
-        assertTrue(feeOnValue);
-        assertEq(feeValue, newFeeValue);
-        assertEq(automationIntervalValue, newAutomationInterval);
+        vaultState = vault.getVaultState();
+        assertEq(vaultState.feeTo, bob);
+        assertTrue(vaultState.feeOn);
+        assertEq(vaultState.fee, newFeeValue);
+        assertEq(vaultState.automationInterval, newAutomationInterval);
     }
 
     function test__SBPVault_stake() public {

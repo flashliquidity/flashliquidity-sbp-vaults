@@ -3,6 +3,15 @@
 pragma solidity ^0.8.0;
 
 interface ISBPVault {
+
+    struct VaultState {
+        address feeTo; // Address to which fees are sent
+        bool feeOn; // Flag indicating whether fees are currently enabled
+        uint16 fee; // Fee charged for rebalancing operations plus rewards autocompounding, represented in basis points (parts per 10,000).
+        uint48 lastLiquefiedTimestamp; // Timestamp of the last reward liquefaction
+        uint32 automationInterval; // Interval for automatic reward liquefaction
+    }
+
     /**
      * @dev Initializes the vault with a specified amount of LP tokens.
      * @param initializationAmount The amount of LP tokens to initialize the vault with.
@@ -62,16 +71,12 @@ interface ISBPVault {
 
     /**
      * @dev Retrieves the current state of the vault, including fee recipient, fee status, last liquefied timestamp, and automation interval.
-     * @return feeTo Address where fees are sent.
-     * @return feeOn Boolean indicating whether the fee mechanism is currently active.
-     * @return fee The fee value represented in basis points.
-     * @return lastLiquefiedTimestamp Timestamp of the last reward liquefaction.
-     * @return automationInterval Interval, in seconds, for automatic compounding of rewards.
+     * @return vaultState Vault state struct.
      */
     function getVaultState()
         external
         view
-        returns (address feeTo, bool feeOn, uint16 fee, uint48 lastLiquefiedTimestamp, uint32 automationInterval);
+        returns (VaultState memory vaultState);
 
     /**
      * @dev Calculates the rate of vault shares to LP tokens.

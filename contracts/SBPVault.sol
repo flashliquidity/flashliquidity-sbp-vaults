@@ -52,14 +52,6 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
     /// @dev Boolean flag indicating whether the vault has been initialized.
     bool private s_initialized;
 
-    struct VaultState {
-        address feeTo; // Address to which fees are sent
-        bool feeOn; // Flag indicating whether fees are currently enabled
-        uint16 fee; // Fee charged for rebalancing operations plus rewards autocompounding, represented in basis points (parts per 10,000).
-        uint48 lastLiquefiedTimestamp; // Timestamp of the last reward liquefaction
-        uint32 automationInterval; // Interval for automatic reward liquefaction
-    }
-
     event Staked(address indexed staker, uint256 amount);
     event Withdrawn(address indexed withdrawer, uint256 amount);
     event Liquefied(uint256 balance0, uint256 balance1, uint256 liquidity);
@@ -242,14 +234,9 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
     function getVaultState()
         external
         view
-        returns (address feeTo, bool feeOn, uint16 fee, uint48 lastLiquefiedTimestamp, uint32 automationInterval)
+        returns (VaultState memory)
     {
-        VaultState memory vaultState = s_vaultState;
-        feeTo = vaultState.feeTo;
-        feeOn = vaultState.feeOn;
-        fee = vaultState.fee;
-        lastLiquefiedTimestamp = vaultState.lastLiquefiedTimestamp;
-        automationInterval = vaultState.automationInterval;
+        return s_vaultState;
     }
 
     /// @inheritdoc ISBPVault
