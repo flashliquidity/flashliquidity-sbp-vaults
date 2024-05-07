@@ -210,7 +210,7 @@ contract SBPVault is ISBPVault, ERC20, ERC20Permit("SBPVault") {
     }
 
     function _revertIfExcessiveFeeValue(uint24 fee) internal pure {
-        if(fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
+        if (fee > MAX_FEE) revert SBPVault__ExcessiveFeeValue();
     }
 
     /**
